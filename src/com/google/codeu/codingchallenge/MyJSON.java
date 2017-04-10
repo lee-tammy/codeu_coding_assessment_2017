@@ -18,9 +18,11 @@ import java.util.Collection;
 
 final class MyJSON implements JSON {
 
+  //public MyJSON(){
+    
   @Override
   public JSON getObject(String name) {
-    // TODO: implement this
+     
     return null;
   }
 
@@ -32,8 +34,7 @@ final class MyJSON implements JSON {
 
   @Override
   public String getString(String name) {
-    // TODO: implement this
-    return null;
+    return ""; 
   }
 
   @Override
@@ -49,6 +50,5 @@ final class MyJSON implements JSON {
 
   @Override
   public void getStrings(Collection<String> names) {
-    // TODO: implement this
   }
 }

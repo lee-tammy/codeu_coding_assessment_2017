@@ -15,12 +15,58 @@
 package com.google.codeu.codingchallenge;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 final class MyJSONParser implements JSONParser {
+  HashMap<String, MyJSON> map = new HashMap<String, MyJSON>();
+  private final String INVALID_START = "The JSON string should not begin that" 
+      + " way.";
+  private final String STRING_DNE = "The first string does not exist.";
 
   @Override
   public JSON parse(String in) throws IOException {
-    // TODO: implement this
+    String str = in.trim();
+    String key = "";
+    MyJSON value = new MyJSON();
+    int i = 0; 
+    while(i < str.length()){
+      if(i == 0){
+        char firstChar = validFirst(str.charAt(i));
+        if(firstChar == ','){
+          throw new IOException(INVALID_START);
+        }
+        int stringLen = matchClosing(str, firstChar, i);
+        if(stringLen < 0){
+          throw new IOException(STRING_DNE);
+        }
+        key += str.substring(0, stringLen);
+        i = stringLen;
+      }else if(i == str.length() - 1){
+      }else{
+        
+      }
+      i++;
+    }
+    
     return new MyJSON();
   }
+
+  private char validFirst(char c){
+    if(c == '\"' || c == '{'){
+      return c;
+    }else{
+      return ','; // dummy char that denotes invalid starting character
+    }
+  }
+
+  private int matchClosing(String str, char firstChar, int index){
+    int i = index + 1;
+    while(i < str.length()){
+      if(str.charAt(i) == firstChar){
+        return i;
+      }
+    }
+    return -1;
+  }
+
 }
