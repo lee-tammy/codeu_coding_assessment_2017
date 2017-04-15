@@ -16,57 +16,78 @@ package com.google.codeu.codingchallenge;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.*;
 
-final class MyJSONParser implements JSONParser {
-  HashMap<String, MyJSON> map = new HashMap<String, MyJSON>();
-  private final String INVALID_START = "The JSON string should not begin that" 
-      + " way.";
-  private final String STRING_DNE = "The first string does not exist.";
+final class MyJSONParser implements JSONParser{
+  private MyJSON json = new MyJSON();
 
   @Override
-  public JSON parse(String in) throws IOException {
-    String str = in.trim();
-    String key = "";
-    MyJSON value = new MyJSON();
-    int i = 0; 
-    while(i < str.length()){
-      if(i == 0){
-        char firstChar = validFirst(str.charAt(i));
-        if(firstChar == ','){
-          throw new IOException(INVALID_START);
-        }
-        int stringLen = matchClosing(str, firstChar, i);
-        if(stringLen < 0){
-          throw new IOException(STRING_DNE);
-        }
-        key += str.substring(0, stringLen);
-        i = stringLen;
-      }else if(i == str.length() - 1){
-      }else{
-        
+  public JSON parse(String in) throws IOException{
+    in = in.trim(); 
+    putInHash(in); 
+    // Check if the parentheses and quotes are balanced
+    /*if(!isBalanced(in)){
+      return false;//throw new IOException("Brackets /or quotes are not balanced");
+    }*/
+    
+    // Check if it matches pattern for JSON
+    
+    // Group together
+    return json;
+  }
+
+  private void putInHash(String in){
+    String emptyPat = "\\{?\"?[ ]*\"?\\}?";
+    String strstrPat = "\"[ a-zA-Z0-9]+\":\"[ a-zA-Z0-9]+\"";
+
+    Pattern pattern1 = Pattern.compile(strstrPat);
+    Pattern pattern0 = Pattern.compile(emptyPat);
+
+    if(pattern0.matcher(in).matches()){
+      System.out.println("hi");
+    }else if(pattern1.matcher(in).matches()){
+
+      //put in hash value
+      String compressed = in.replaceAll(" ", "");
+      System.out.println(compressed);
+      if(compressed.length() > 2){
+        in = in.replaceAll("\\\"",""); 
+        String values[] = in.split(":");
+        json.setString(values[0], values[1]);
       }
-      i++;
+
+    }else if(in.charAt(0) == '{' && in.charAt(in.length() - 1) == '}'){
+      String inside = in.substring(in.indexOf('{') + 1, in.length() - 1);
+      inside = inside.trim();
+      String[] nestedObj = inside.split(",");
+      if(nestedObj.length >= 1){
+        for(int i = 0; i < nestedObj.length; i++){
+          putInHash(nestedObj[i]);
+        }
+      }else{
+      }
+
+    }
+  }
+  
+  /*private boolean isBalanced(String str){
+    Stack<Character> bracketStack = new Stack<Character>();
+    int quoteCount = 0;
+    for(int i = 0; i < str.length(); i++){
+      char c = str.charAt(i);
+      if(c == '}' && bracketStack.isEmpty()){
+        return false;
+      }else if(!bracketStack.isEmpty() && c == '}'){
+        bracketStack.pop();
+      }else if(c == '{'){
+        bracketStack.push('{');
+      }
+      if(c == '"'){
+        quoteCount++;
+      }
     }
     
-    return new MyJSON();
-  }
-
-  private char validFirst(char c){
-    if(c == '\"' || c == '{'){
-      return c;
-    }else{
-      return ','; // dummy char that denotes invalid starting character
-    }
-  }
-
-  private int matchClosing(String str, char firstChar, int index){
-    int i = index + 1;
-    while(i < str.length()){
-      if(str.charAt(i) == firstChar){
-        return i;
-      }
-    }
-    return -1;
-  }
-
+    return bracketStack.isEmpty() && quoteCount % 2 == 0;
+  }*/
 }

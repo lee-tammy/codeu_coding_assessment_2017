@@ -27,17 +27,25 @@ final class TestMain {
       @Override
       public void run(JSONFactory factory) throws Exception {
         final JSONParser parser = factory.parser();
-        final JSON obj = parser.parse("{ }");
+        final JSON obj = parser.parse("{     }");
 
         final Collection<String> strings = new HashSet<>();
         obj.getStrings(strings);
 
         Asserts.isEqual(strings.size(), 0);
 
-        final Collection<String> objects = new HashSet<>();
+        /*final Collection<String> objects = new HashSet<>();
         obj.getObjects(objects);
 
-        Asserts.isEqual(objects.size(), 0);
+        Asserts.isEqual(objects.size(), 0);*/
+      }
+    });
+
+    tests.add("String key, String Value", new Test(){
+      public void run(JSONFactory factory) throws Exception{
+        final JSONParser parser = factory.parser();
+        final JSON obj = parser.parse("\"name\":\"Tammy\"");
+        Asserts.isEqual("Tammy", obj.getString("name"));
       }
     });
 
@@ -49,6 +57,22 @@ final class TestMain {
 
         Asserts.isEqual("sam doe", obj.getString("name"));
      }
+    });
+
+    tests.add("Multiple String keys and String values", new Test(){
+      public void run(JSONFactory factory) throws Exception{
+        final JSONParser parser = factory.parser();
+        final JSON obj = parser.parse("{\"first\":\"sam\",\"last\":\"doe\"}");
+
+        final Collection<String> strings = new HashSet<>();
+        obj.getStrings(strings);
+
+        Asserts.isEqual(strings.size(), 2);
+        Asserts.isTrue(strings.contains("sam"), "ERROR - should contain sam");
+        Asserts.isTrue(strings.contains("doe"), "ERROR - should contain doe");
+        Asserts.isTrue(!strings.contains("last"), "ERROR - should not contain" 
+            + " last"); 
+      }
     });
 
     tests.add("Object Value", new Test() {
