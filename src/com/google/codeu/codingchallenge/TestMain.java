@@ -14,6 +14,7 @@
 
 package com.google.codeu.codingchallenge;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -28,7 +29,7 @@ final class TestMain {
       @Override
       public void run(JSONFactory factory) throws Exception {
         final JSONParser parser = factory.parser();
-        final JSON obj = parser.parse("{     }");
+        final JSON obj = parser.parse("{ }");
 
         final Collection<String> strings = new HashSet<>();
         obj.getStrings(strings);
@@ -42,11 +43,11 @@ final class TestMain {
       }
     });
 
-    tests.add("String key, String Value", new Test(){
+    tests.add("String key, String Value - no brackets", new Test(){
       public void run(JSONFactory factory) throws Exception{
         final JSONParser parser = factory.parser();
-        final JSON obj = parser.parse("\"name\":\"Tammy\"");
-        Asserts.isEqual("Tammy", obj.getString("name"));
+        final JSON obj = parser.parse("\"name\":\"sam\"");
+        Asserts.isEqual("sam", obj.getString("name"));
       }
     });
 
@@ -59,6 +60,25 @@ final class TestMain {
         Asserts.isEqual("sam doe", obj.getString("name"));
      }
     });
+
+    tests.add("String value with escape characters", new Test(){
+      public void run(JSONFactory factory) throws Exception{
+        final JSONParser parser1 = factory.parser();
+        final JSON obj1 = parser1.parse("\"name\":\"sam\\bdoe\"");
+
+        Asserts.isEqual("sam\\bdoe", obj1.getString("name"));
+        
+        final JSONParser parser2 = factory.parser();
+        final JSON obj2 = parser2.parse("\"name\":\"sa\\rm\\ndoe\"");
+        
+        Asserts.isEqual("sa\\rm\\ndoe", obj2.getString("name"));
+      
+        final JSONParser parser3 = factory.parser();
+        final JSON obj3 = parser3.parse("{\"\\\"name\":\"s\\\"am doe\"}");
+    
+        Asserts.isEqual("s\\\"am doe", obj3.getString("\\\"name"));       
+       }
+    }); 
 
     tests.add("Multiple String keys and String values", new Test(){
       public void run(JSONFactory factory) throws Exception{

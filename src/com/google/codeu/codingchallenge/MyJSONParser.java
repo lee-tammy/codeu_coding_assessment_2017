@@ -37,38 +37,88 @@ final class MyJSONParser implements JSONParser{
     return json;
   }
 
-  private void putInHash(String in){
+  private void putInHash(String in) throws IOException{
     String emptyPat = "\\{?\"?[ ]*\"?\\}?";
-    String strstrPat = "\"[ a-zA-Z0-9]+\":\"[ a-zA-Z0-9]+\"";
-
-    Pattern pattern1 = Pattern.compile(strstrPat);
+    String strstrPat = "\"[\\\\\" a-zA-Z0-9]+\":\"[\\\\\" a-zA-Z0-9]+\"";
+    //String strObjPat = "\"[ a-zA-Z0-9]+\":{[^}]+}";
+    
     Pattern pattern0 = Pattern.compile(emptyPat);
+    Pattern pattern1 = Pattern.compile(strstrPat);
+    //Pattern pattern2 = Pattern.compile(strObjPat);
 
     if(pattern0.matcher(in).matches()){
-      System.out.println("hi");
+      // Nothing happens
     }else if(pattern1.matcher(in).matches()){
-
+      //System.out.println("Matched pattern1"); 
       //put in hash value
       String compressed = in.replaceAll(" ", "");
-      System.out.println(compressed);
       if(compressed.length() > 2){
-        in = in.replaceAll("\\\"",""); 
-        String values[] = in.split(":");
+          StringBuilder sb = new StringBuilder();
+          sb.append(removeQuotes(in.substring(0, in.indexOf(":"))));
+          sb.append(removeQuotes(in.substring(in.indexOf(":"))));
+          if(!checkEscapeChars(sb.toString())){
+            throw new IOException("Invalid escape characters");
+          } 
+        String values[] = sb.toString().split(":");
+        //System.out.println("hello" + values[0] + " " + values[1]);
         json.setString(values[0], values[1]);
       }
 
     }else if(in.charAt(0) == '{' && in.charAt(in.length() - 1) == '}'){
       String inside = in.substring(in.indexOf('{') + 1, in.length() - 1);
       inside = inside.trim();
+      //System.out.println(inside);
       String[] nestedObj = inside.split(",");
-      if(nestedObj.length >= 1){
-        for(int i = 0; i < nestedObj.length; i++){
-          putInHash(nestedObj[i]);
+      if(inside.contains(",")){
+        if(nestedObj.length >= 1){
+          for(int i = 0; i < nestedObj.length; i++){
+            putInHash(nestedObj[i]);
+          }
         }
-      }else{
+      // one key and value pair
+      }else{ 
+        putInHash(inside); 
       }
 
+    }/*else if(pattern2.matcher(in).matches()){
+      in = in.replaceAll("\\\"", "");
+      String values[] in.split(":");
+      json.setObject(values[0],  
+      JSONFactory factory = new JSONFactory();
+      JSONParser parser = factory.parser();
+      JSON obj = parser.parse(      
+    }*/
+  }
+
+  private boolean checkEscapeChars(String in){ 
+    for(int i = 0; i < in.length() - 1; i++){
+      char c = in.charAt(i);
+      if(c == '\\'){
+        char nextChar = in.charAt(i + 1);
+        if(nextChar != 't' && nextChar != 'b' && nextChar != 'n' && 
+            nextChar != 'r' && nextChar != 'f' && nextChar != '"' && 
+            nextChar != 's'){
+          return false;
+        }       
+      }
     }
+    return true;
+  }
+
+  private String removeQuotes(String in){
+    in = replaceLast(in, "\"", ""); 
+    in = in.replaceFirst("\"", "");
+    return in;
+  }
+
+  String replaceLast(String string, String substring, String replacement){
+    int index = string.lastIndexOf(substring);
+    
+    if (index == -1){
+      return string;
+    }
+    return string.substring(0, index) + replacement
+          + string.substring(index+substring.length());
   }
   
   /*private boolean isBalanced(String str){
