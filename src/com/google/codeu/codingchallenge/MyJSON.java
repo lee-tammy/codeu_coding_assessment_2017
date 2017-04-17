@@ -41,7 +41,6 @@ final class MyJSON implements JSON {
 
   @Override
   public String getString(String name) {
-    System.out.println(strMap.containsKey(name));
     return strMap.get(name);
   }
 
@@ -53,19 +52,18 @@ final class MyJSON implements JSON {
 
   @Override
   public void getObjects(Collection<String> names) {
-    names = objMap.keySet();
+    names.clear();
+    for(String i : objMap.keySet()){
+      names.add(i);
+    }
   }
 
   @Override
   public void getStrings(Collection<String> names) {
-    names.addAll(strMap.values());
+    names.clear();
+    for(String i : strMap.keySet()){
+      names.add(i);
+    }
   }
 
-  public Map getStrMap(){
-    return strMap;
-  }
-  
-  public Map getObjMap(){
-    return objMap;
-  }
 }
