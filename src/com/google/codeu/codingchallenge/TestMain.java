@@ -43,14 +43,6 @@ final class TestMain {
       }
     });
 
-    tests.add("String key, String Value - no brackets", new Test(){
-      public void run(JSONFactory factory) throws Exception{
-        final JSONParser parser = factory.parser();
-        final JSON obj = parser.parse("\"name\":\"sam\"");
-        Asserts.isEqual("sam", obj.getString("name"));
-      }
-    });
-
     tests.add("String Value", new Test() {
       @Override
       public void run(JSONFactory factory) throws Exception {
@@ -64,15 +56,15 @@ final class TestMain {
     tests.add("String value with escape characters", new Test(){
       public void run(JSONFactory factory) throws Exception{
         final JSONParser parser1 = factory.parser();
-        final JSON obj1 = parser1.parse("\"name\":\"sam\\bdoe\"");
+        final JSON obj1 = parser1.parse("{\"name\":\"sa\\nm\\tdoe\"}");
 
-        Asserts.isEqual("sam\\bdoe", obj1.getString("name"));
-        
-        final JSONParser parser2 = factory.parser();
-        final JSON obj2 = parser2.parse("\"name\":\"sa\\rm\\ndoe\"");
-        
-        Asserts.isEqual("sa\\rm\\ndoe", obj2.getString("name"));
-             
+        Asserts.isEqual("sa\\nm\\tdoe", obj1.getString("name"));      
+  
+        try{
+          final JSON obj = parser.parse("{\"\\g\":\"sam\"}");
+        }catch(IOException e){
+          //normal 
+        }       
        }
     }); 
 
@@ -96,9 +88,8 @@ final class TestMain {
       public void run(JSONFactory factory) throws Exception {
 
         final JSONParser parser = factory.parser();
-        //final JSON obj = parser.parse("{ \"name\":{\"first\":\"sam\", \"last\":\"doe\" } }");
-        final JSON obj = parser.parse("{\"name\":{\"first\":\"sam\", " + 
-            "\"last\":\"doe\"}}");
+        final JSON obj = parser.parse("{ \"name\":{\"first\":\"sam\", \"last\""
+            + ":\"doe\" } }");
         final JSON nameObj = obj.getObject("name");
 
         Asserts.isNotNull(nameObj);
@@ -122,30 +113,44 @@ final class TestMain {
       }
     });
 
-    tests.add("Extra", new Test(){
+    tests.add("Excess space", new Test(){
       public void run(JSONFactory factory) throws Exception{
         final JSONParser parser = factory.parser();
-        final JSON obj = parser.parse("{\"student\":{\"first\":\"sam\"," +
+        final JSON obj = parser.parse("{\" first   \": \"sa m\", \" last" + 
+            " \":\"doe\"}");
+              
+        Asserts.isEqual("sa m", obj.getString(" first   "));
+        Asserts.isEqual("doe", obj.getString(" last "));
+      }
+    }); 
+
+    tests.add("Random mix of objects and strings", new Test(){
+      public void run(JSONFactory factory) throws Exception{
+        final JSONParser parser = factory.parser();
+        final JSON obj = parser.parse("{\"office\":{\"first\":\"sam\"," +
             "\"last\":\"doe\"},\"school\":{\"student\":{\"first\":" + 
-            "\"john\"," + "\"last\":\"apple\" }}}");
+            "\"john\", \"last\":\"apple\" }}, \"friend\":\"lily\\nlin\"}");
 
         final Collection<String> objects = new HashSet<>();
         obj.getObjects(objects);
         Asserts.isEqual(objects.size(), 2);
 
-        final JSON nameObj0 = obj.getObject("student");
+        final JSON nameObj0 = obj.getObject("office");
         final JSON nameObj1 = obj.getObject("school");
         final JSON nameObj2 = nameObj1.getObject("student");
 
         Asserts.isNotNull(nameObj0);
+        Asserts.isNotNull(nameObj1);
+        Asserts.isNotNull(nameObj2);
+       
         Asserts.isEqual("sam", nameObj0.getString("first"));
         Asserts.isEqual("doe", nameObj0.getString("last"));
 
 
-        Asserts.isNotNull(nameObj1);
-        Asserts.isNotNull(nameObj2); 
         Asserts.isEqual("john", nameObj2.getString("first"));
-        Asserts.isEqual("apple", nameObj2.getString("last"));             
+        Asserts.isEqual("apple", nameObj2.getString("last"));   
+      
+        Asserts.isEqual("lily\\nlin", obj.getString("friend"));           
 
       }
     });

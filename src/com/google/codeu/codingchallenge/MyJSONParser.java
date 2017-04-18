@@ -28,56 +28,71 @@ final class MyJSONParser implements JSONParser{
 
     MyJSON json = new MyJSON();
     in = in.trim(); 
+
     // Check if the parentheses and quotes are balanced
     if(!isBalanced(in)){
       throw new IOException("Parentheses/or quotes are unbalanced");
     } 
-    in = removeSpaces(in);     
+
+    if(!checkEscapeChars(in)){
+      throw new IOException("Invalid escape characters");
+    }
+    in = removeSpaces(in);   
+
+    // Empty JSON  
     if(pattern0.matcher(in).matches()){
       // Nothing happens
+
+    // Matches string regex
     }else if(stringMatch(in)){
       String[] values = separatePairs(in);
       json.setString(values[0], values[1]);
 
+    // JSON object is wrapped in brackets
     }else if(in.charAt(0) == '{' && in.charAt(in.length() - 1) == '}'){
+
+      // Remove outer brackets and split inner JSON objects by the commas
       String inside = in.substring(in.indexOf('{') + 1, in.length() - 1);
       inside = inside.trim();
+  
+      // Contains all of the pairs 
       ArrayList<String> nestedObj = splitJSON(inside);
-
-      // breaks case - " ":" ", " ":{"":""}
-      if(validMultiPairs(inside)){
-        if(nestedObj.size() >= 1){
-          for(int i = 0; i < nestedObj.size(); i++){
-            if(stringMatch(nestedObj.get(i))){
-              String values[] = separatePairs(nestedObj.get(i));
-              json.setString(values[0], values[1]);
-            }else if(objectMatch(nestedObj.get(i))){
-              String values[] = separatePairs(nestedObj.get(i));
-              json.setObject(values[0], parse(values[1]));
-            }
+  
+      if(nestedObj.size() >= 1){
+  
+        // Stores key and value pairs in the hashmap
+        for(int i = 0; i < nestedObj.size(); i++){
+          if(stringMatch(nestedObj.get(i))){
+            String values[] = separatePairs(nestedObj.get(i));
+            json.setString(values[0], values[1]);
+          }else if(objectMatch(nestedObj.get(i))){
+            String values[] = separatePairs(nestedObj.get(i));
+            json.setObject(values[0], parse(values[1]));
           }
         }
-      // one key and value pair
-      }else{
-        if(stringMatch(inside)){ 
-          String[] pair = separatePairs(inside);
-          json.setString(pair[0], pair[1]);
-        }else if(objectMatch(inside)){
-          String[] pair = separatePairs(inside);
-          json.setObject(pair[0], parse(pair[1]));
-        }
-      }
+      } 
+  
+    // Throws exception if the string does not match anything above
+    }else{
+      throw new IOException("Invalid JSON");
     } 
     return json;
   }
+ 
 
-
+  /**
+   * Checks if the string follows String:String format
+   */
   private boolean stringMatch(String in){
-    String strstrPat = "[ ]*\"[\\\\\" a-zA-Z0-9]+\":\"[\\\\\" a-zA-Z0-9]+\"";
+    String strstrPat = "\"[\\\\\" a-zA-Z0-9]+\":\"[\\\\\" a-zA-Z0-9]+\"";
     Pattern pattern1 = Pattern.compile(strstrPat);
     return pattern1.matcher(in).matches();
   }
 
+
+  /**
+   * Checks if the string follows String:Object format
+   */
   private boolean objectMatch(String in){
     String strObjPat="\"[\\\\\" a-zA-Z0-9]+\":\\{[\\}\\{a-zA-Z0-9:,\\\\\" ]+" + 
         "\\}";
@@ -86,6 +101,10 @@ final class MyJSONParser implements JSONParser{
     return pattern2.matcher(in).matches();  
   }
 
+
+  /**
+   * Separates the key and the value and stores them into an array
+   */
   private String[] separatePairs(String in) throws IOException{
     String compressed = in.replaceAll(" ", "");
     if(compressed.length() > 2){
@@ -96,20 +115,27 @@ final class MyJSONParser implements JSONParser{
       sb.append(removeQuotes(in.substring(in.indexOf(":"))));
       if(!checkEscapeChars(in)){
         throw new IOException("Invalid escape characters");
-      } 
-      return sb.toString().split(":", 2);
+      }
+      if(!sb.toString().contains(":")){
+        throw new IOException("Invalid key-value pair - Missing ':'");
+      }else{
+        return sb.toString().split(":", 2);
+      }
     }
     String[] st = new String[0];
     return st;
   }
 
+
+  /**
+   * Checks if the string contains valid escape characters
+   */
   private boolean checkEscapeChars(String in){ 
     for(int i = 0; i < in.length() - 1; i++){
       char c = in.charAt(i);
       if(c == '\\'){
         char nextChar = in.charAt(i + 1);
-        if(nextChar != 't' && nextChar != 'b' && nextChar != 'n' && 
-            nextChar != 'r' && nextChar != 'f' && nextChar != 's'){
+        if(nextChar != 't' && nextChar != 'n'){
           return false;
         }       
       }
@@ -117,22 +143,10 @@ final class MyJSONParser implements JSONParser{
     return true;
   }
 
-  private boolean validMultiPairs(String in){
-    int count = 0;
-    for(int i = 0; i < in.length(); i++){ 
-      char c = in.charAt(i);
-      if(c == '{'){
-        count++;
-      }else if(c == '}'){
-        count--;
-      }
-      if(c == ',' && count == 0){
-        return true;
-      }
-    }
-    return false;
-  }
 
+  /**
+   * Removes spaces not within a string key and value
+   */
   private String removeSpaces(String in){
     int quotes = 0;
     StringBuilder sb = new StringBuilder();
@@ -150,6 +164,10 @@ final class MyJSONParser implements JSONParser{
     return sb.toString();
   }
 
+
+  /**
+   * Returns a string that has its quotes (\") removed
+   */
   private String removeQuotes(String in){
     StringBuilder sb = new StringBuilder();
     int inBetween = 0;
@@ -170,11 +188,16 @@ final class MyJSONParser implements JSONParser{
     return sb.toString();
   }
 
+
+  /**
+   * Splits the JSON by the commas
+   */
   private ArrayList<String> splitJSON(String in){
     ArrayList<String> list = new ArrayList<String>();
     StringBuilder sb = new StringBuilder();
     int inBetween = 0;
     int index = 0;
+    int quoteCount = 0;
     for(int i = 0; i < in.length(); i++){
       char c = in.charAt(i);
       if(c == '{'){
@@ -196,17 +219,11 @@ final class MyJSONParser implements JSONParser{
     }
     return list;
   }
-
-  String replaceLast(String string, String substring, String replacement){
-    int index = string.lastIndexOf(substring);
-    
-    if (index == -1){
-      return string;
-    }
-    return string.substring(0, index) + replacement
-          + string.substring(index+substring.length());
-  }
-  
+ 
+ 
+  /**
+   * Checks if the quotes and brackets are balanced
+   */
   private boolean isBalanced(String str){
     Stack<Character> bracketStack = new Stack<Character>();
     int quoteCount = 0;
